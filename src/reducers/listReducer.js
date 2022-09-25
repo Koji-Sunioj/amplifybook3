@@ -2,7 +2,6 @@ export const initialState = {
   homepage: {
     notes: [],
     error: false,
-    form: { name: "", description: "" },
   },
   listitem: {
     note: {},
@@ -16,7 +15,11 @@ export function reducer(state, action) {
       const { notes } = action;
       return {
         ...state,
-        homepage: { notes: notes, error: false },
+        homepage: {
+          ...state.homepage,
+          notes: notes,
+          error: false,
+        },
       };
 
     case "SET_NOTE":
@@ -34,7 +37,6 @@ export function reducer(state, action) {
         },
       };
     default:
-      console.log("asdads");
       return state;
   }
 }

@@ -1,8 +1,7 @@
 import { useContext } from "react";
 import { ListContext } from "../App";
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
-
+import { useEffect } from "react";
 import { API } from "aws-amplify";
 import { getNote } from "../graphql/queries";
 
@@ -10,7 +9,7 @@ const ListItem = () => {
   const { itemId } = useParams();
   const { state, dispatch } = useContext(ListContext);
   const { note } = state.listitem;
-
+  console.log(state);
   useEffect(() => {
     grabNote();
   }, [itemId]);
@@ -31,7 +30,7 @@ const ListItem = () => {
     }
   };
 
-  const validNote = Object.keys(note).length > 0;
+  const validNote = note.id === itemId;
   return validNote ? (
     <div style={{ padding: "20px" }}>
       <h1>{note.name}</h1>

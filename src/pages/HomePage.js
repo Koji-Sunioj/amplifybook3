@@ -6,23 +6,23 @@ import { Link } from "react-router-dom";
 
 function HomePage() {
   const { searchStorage, dateStorage, statusStorage } = localStorage;
-
   const checkKey = (key, comparison) => {
     const pair = key === undefined ? comparison : key;
     return pair;
   };
-
-  const { state, dispatch } = useContext(ListContext);
+  const { dispatch, state } = useContext(ListContext);
   const [searchString, setSearchString] = useState(checkKey(searchStorage, ""));
   const [status, setSearchStatus] = useState(checkKey(statusStorage, null));
   const [date, setDateStatus] = useState(checkKey(dateStorage, null));
   const [loading, setLoading] = useState(false);
+  const [timer, setTimer] = useState(null);
+
   const { homepage } = state;
 
   useEffect(() => {
-    //if (!state.notes) {
-    fetchNotes();
-    //}
+    const { event } = window;
+    const isPopped = event && event.type !== "popstate";
+    isPopped && fetchNotes();
   }, [searchString, status, date]);
 
   async function fetchNotes() {
@@ -53,41 +53,47 @@ function HomePage() {
     }
   }
 
-  const sendIt = (event) => {
-    event.preventDefault();
-    const { value } = event.currentTarget.search;
-    localStorage.setItem("searchStorage", value);
-    setSearchString(value);
-  };
-
   return (
-    <div style={{ padding: "20px", opacity: loading ? "0.5" : "1" }}>
+    <div style={{ padding: "20px" }}>
       <form
-        onSubmit={sendIt}
         style={{
           display: "flex",
           flexDirection: "row",
           justifyContent: "space-between",
           width: "50%",
+          padding: "10px",
         }}
       >
         <div>
           <label htmlFor="search">search: </label>
           <input
-            type="text"
-            name="search"
+            style={{ WebkitAppearance: "searchfield-cancel-button" }}
+            type="search"
             placeholder="...title"
             defaultValue={searchString}
+            onChange={(e) => {
+              clearTimeout(timer);
+              const { value } = e.currentTarget;
+              const newTimer = setTimeout(() => {
+                localStorage.setItem("searchStorage", value);
+                setSearchString(value);
+              }, 500);
+
+              setTimer(newTimer);
+            }}
           />
         </div>
         <div>
           <select
+            style={{ height: "100%" }}
             defaultValue={status}
             name="status"
             onChange={(e) => {
               const pointer = { status: null, false: false, true: true };
               const data = pointer[e.currentTarget.value];
-              localStorage.setItem("statusStorage", data);
+              data === null
+                ? localStorage.removeItem("statusStorage")
+                : localStorage.setItem("statusStorage", data);
               setSearchStatus(data);
             }}
           >
@@ -99,7 +105,6 @@ function HomePage() {
         <div>
           <input
             type="date"
-            name="date"
             defaultValue={date}
             onChange={(e) => {
               const { value } = e.currentTarget;
@@ -111,16 +116,19 @@ function HomePage() {
       </form>
       <hr />
       {homepage.notes.length > 0 ? (
-        homepage.notes.map((note) => (
-          <div key={note.id}>
-            <h2>
-              <Link to={`/list-item/${note.id}`}>{note.name}</Link>{" "}
-            </h2>
-            <p>{note.description}</p>
-            <p>{note.createdAt}</p>
-            <p>completed: {!note.completed ? "not yet" : "done"}</p>
-          </div>
-        ))
+        homepage.notes.map((note) => {
+          const date = new Date(note.createdAt);
+          return (
+            <div key={note.id} style={{ opacity: loading ? "0.5" : "1" }}>
+              <h2>
+                <Link to={`/list-item/${note.id}`}>{note.name}</Link>{" "}
+              </h2>
+              <p>{note.description}</p>
+              <p>{date.toLocaleString()}</p>
+              <p>completed: {!note.completed ? "not yet" : "done"}</p>
+            </div>
+          );
+        })
       ) : (
         <h1>no data</h1>
       )}
